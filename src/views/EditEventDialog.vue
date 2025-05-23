@@ -82,7 +82,6 @@
 
     if (result.success) {
       emit('updated', result.data)
-      close()
     } else {
       error.value = result.message
     }
