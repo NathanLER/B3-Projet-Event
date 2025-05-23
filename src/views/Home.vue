@@ -1,5 +1,16 @@
 <template>
-<div class="max-w-6xl mx-auto p-4">
+
+<div v-if="!token" class="home max-w-3xl mx-auto text-center mt-16 px-4">
+    <h1 class="text-4xl font-bold mb-6">Bienvenue sur notre site</h1>
+    <p class="text-lg mb-4">Ceci est la page d'accueil.</p>
+    <p class="text-sm text-gray-500">{{ token }}</p>
+  </div>
+
+
+<div v-if="token"><h2 class="text-3xl font-semibold mb-6 text-center" >Prochain événement auquel vous êtes inscrit</h2></div>
+
+
+<div v-if="token" class="max-w-6xl mx-auto p-4">
     <h2 class="text-3xl font-semibold mb-6 text-center"></h2>
 
     <div v-if="loading" class="text-center italic text-gray-600">Chargement des événements...</div>
@@ -38,6 +49,9 @@
 import { inject } from 'vue'
 import { ref,onMounted } from 'vue'
 import {getListEventsRegister} from '../services/getListEventRegister'
+import { token } from '../services/setToken'
+
+
 const loading = ref(false)
 const error = ref(null)
 const listEvents = ref([])
@@ -72,6 +86,6 @@ function formatDate(dateStr) {
 
 // console.log(listEvents.value)
 // Si tu as un token injecté ou défini globalement, sinon tu peux le récupérer ici autrement
-const token = inject('token', '') 
+// const token = inject('token', '')  
 </script>
 
