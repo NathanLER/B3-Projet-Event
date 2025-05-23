@@ -4,6 +4,8 @@ import Login from './views/Login.vue'
 import Profile from './views/Profile.vue'
 import Events from './views/AddEvents.vue'
 import ListEvents from './views/ListEvents.vue'
+import ListUsers from './views/ListUsers.vue'
+
 
 const routes = [
   { path: '/', name: 'Home', component: Home },
@@ -11,6 +13,7 @@ const routes = [
   { path: '/profile', name: 'Profile', component: Profile, meta: { requiresAuth: true } },
   { path: '/events', name: 'Events', component: Events, meta: { requiresAuth: true }},
   { path: '/listevents', name: 'ListEvents', component: ListEvents, meta: { requiresAuth: true }},
+  { path: '/listusers', name: 'ListUsers', component: ListUsers, meta: { requiresAuth: true }},
 ]
 
 const router = createRouter({

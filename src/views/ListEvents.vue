@@ -1,36 +1,127 @@
 <template>
-  <div class="events">
-    <h2>Événements disponibles</h2>
+  <div class="max-w-6xl mx-auto p-4">
+    <h2 class="text-3xl font-semibold mb-6 text-center">Événements disponibles</h2>
 
-    <div v-if="loading" class="loading">Chargement des événements...</div>
-    <div v-else-if="error" class="error">{{ error }}</div>
-    <div v-else class="events-grid">
-      <div v-if="events.length === 0" class="no-events">Aucun événement disponible.</div>
-      <div v-for="event in events" :key="event._id" class="event-card">
-        <h3>{{ event.title }}</h3>
-        <p>{{ event.description }}</p>
-        <p><strong>Date :</strong> {{ formatDate(event.date) }}</p>
-        <p><strong>Lieu :</strong> {{ event.location }}</p>
-        <p><strong>Max participants :</strong> {{ event.maxParticipants }}</p>
-        <button class="btn-inscrire" @click="inscrire(event)">S'inscrire</button>
+    <div v-if="loading" class="text-center italic text-gray-600">Chargement des événements...</div>
+    <div v-else-if="error" class="text-center text-red-600 font-semibold">{{ error }}</div>
+    <div v-else>
+      <div v-if="events.length === 0" class="text-center text-gray-500 text-lg py-10">Aucun événement disponible.</div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div
+          v-for="event in events"
+          :key="event._id"
+          class="bg-white rounded-lg shadow-md p-5 flex flex-col justify-between"
+        >
+          <div>
+            <h3 class="text-xl font-bold mb-2 text-gray-800">{{ event.title }}</h3>
+            <p class="text-gray-700 mb-3">{{ event.description }}</p>
+            <p class="text-gray-600 text-sm mb-1"><strong>Date :</strong> {{ formatDate(event.date) }}</p>
+            <p class="text-gray-600 text-sm mb-1"><strong>Lieu :</strong> {{ event.location }}</p>
+            <p class="text-gray-600 text-sm"><strong>Participant :</strong> {{  event.participantsCount  }} / {{ event.capacity }}</p>
+            <!-- <p class="text-gray-600 text-sm"><strong>Capacité :</strong> {{ event.capacity   }}</p> -->
+          </div class="flex space-x-0 rounded overflow-hidden shadow w-max">
+          <button
+            :disabled="event.participantsCount == event.capacity"
+            v-if="!event.isRegistered"
+            @click="inscription(event,token)"
+            class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2"
+          >
+            S'inscrire
+          </button>
+          <button
+            v-if="event.isRegistered"
+            @click="deinscription(event,token)"
+            class="mt-4 w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded transition"
+          >
+            Se désinscrire
+          </button>
+          <button
+            v-if="user?.admin"
+            @click="askDelete(event)"
+            class="bg-red-500 hover:bg-red-600 text-white px-3 py-2"
+          >
+          🗑️
+          </button>
+          <button
+          v-if="user?.admin"
+          @click="editEvent(event)"
+          class="mt-2 w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 rounded transition"
+        >
+          Modifier
+        </button>
+        <EditEventDialog
+  :visible="showEdit"
+  :event="eventToEdit"
+  :token="token"
+  @cancel="showEdit = false"
+  @updated="handleEventUpdated"
+/>
+
+        </div>
       </div>
     </div>
+
+    <!-- Popup de confirmation -->
+    <ConfirmDialog
+      :visible="showConfirm"
+      @confirm="handleConfirmDelete"
+      @cancel="showConfirm = false"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import { getListEvents } from '../services/getListEvents'
+import { getCurrentUser } from '../services/useAuth'
+import { token } from '../services/setToken'
+import { deleteEvent } from '../services/deleteEvent'
+import ConfirmDialog from './ConfirmDialog.vue'
+import { inscription, deinscription } from '../services/inscription'
 
 const events = ref([])
 const loading = ref(false)
 const error = ref(null)
+const user = ref(null)
+const showConfirm = ref(false)
+const eventToDelete = ref(null)
 
 function formatDate(dateStr) {
-  return new Date(dateStr).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' })
+  return new Date(dateStr).toLocaleDateString('fr-FR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
+}
+
+// function inscrire(event) {
+//   alert(`Inscription à l'événement : ${event.title}`)
+// }
+
+
+
+// Étape 1 : Demande confirmation
+function askDelete(event) {
+  // console.log(event)
+  eventToDelete.value = event
+  showConfirm.value = true
+}
+
+// Étape 2 : Suppression confirmée
+async function handleConfirmDelete() {
+  const result = await deleteEvent(eventToDelete.value._id, token.value)
+  if (result.success) {
+    events.value = events.value.filter(e => e._id !== eventToDelete.value._id)
+  } else {
+    console.error("Erreur suppression :", result.message)
+  }
+  showConfirm.value = false
 }
 
 onMounted(async () => {
+  user.value = await getCurrentUser()
+
   loading.value = true
   error.value = null
   try {
@@ -41,98 +132,29 @@ onMounted(async () => {
     loading.value = false
   }
 })
+
+import EditEventDialog from './EditEventDialog.vue'
+//import { getListUsers } from '@/services/GetListUsers'
+
+const showEdit = ref(false)
+const eventToEdit = ref(null)
+
+function editEvent(event) {
+  // console.log(event)
+  eventToEdit.value = event
+  showEdit.value = true
+}
+
+function handleEventUpdated(updatedEvent) {
+  // console.log(updatedEvent.data.updatedEvent._id)
+
+  events.value  = events.value.map(e =>
+  e._id === updatedEvent.data.updatedEvent._id ? updatedEvent.data.updatedEvent : e
+)
+
+  
+  showEdit.value = false
+}
+
+
 </script>
-
-<style scoped>
-.events {
-  max-width: 900px;
-  margin: 20px auto;
-  font-family: Arial, sans-serif;
-  padding: 0 10px;
-}
-
-.loading {
-  font-style: italic;
-  text-align: center;
-  color: #555;
-}
-
-.error {
-  color: red;
-  font-weight: bold;
-  text-align: center;
-}
-
-.no-events {
-  text-align: center;
-  color: #777;
-  padding: 20px 0;
-  font-size: 1.1rem;
-}
-
-/* Flex grid container */
-.events-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  justify-content: center;
-}
-
-/* Each event card */
-.event-card {
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 15px 20px;
-  box-shadow: 0 1px 5px rgba(0,0,0,0.1);
-  width: calc(33.333% - 20px); /* 3 cards per row with gap */
-  box-sizing: border-box;
-  transition: box-shadow 0.3s ease;
-}
-
-.event-card:hover {
-  box-shadow: 0 5px 15px rgba(0,0,0,0.15);
-}
-
-.event-card h3 {
-  margin: 0 0 10px;
-  color: #2c3e50;
-  font-size: 1.2rem;
-}
-
-.event-card p {
-  margin: 5px 0;
-  color: #444;
-  font-size: 0.9rem;
-}
-
-/* Responsive tweaks */
-@media (max-width: 900px) {
-  .event-card {
-    width: calc(50% - 20px); /* 2 cards per row */
-  }
-}
-
-@media (max-width: 600px) {
-  .event-card {
-    width: 100%; /* 1 card per row */
-  }
-}
-
-.btn-inscrire {
-  margin-top: 15px;
-  padding: 8px 15px;
-  border: none;
-  background-color: #3498db;
-  color: white;
-  font-weight: bold;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  width: 100%;
-}
-
-.btn-inscrire:hover {
-  background-color: #2980b9;
-}
-</style>
