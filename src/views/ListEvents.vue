@@ -168,5 +168,5 @@ function handleEventUpdated(updatedEvent) {
   showEdit.value = false
 }
 
-
+// console.log(events)
 </script>
