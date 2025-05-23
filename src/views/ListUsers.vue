@@ -17,6 +17,16 @@
           class="mt-2 w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded transition"
         >Modifier l'utilisateur
     </button>
+    <button
+          @click="askDelete(user)"
+          class="mt-2 w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-2 rounded transition"
+        >Supprier l'utilisateur
+    </button>
+    <ConfirmDialog
+      :visible="showConfirm"
+      @confirm="handleConfirmDelete"
+      @cancel="showConfirm = false"
+    />
     <EditUserDialog
   :visible="showEdit"
   :user="userToEdit"
@@ -31,9 +41,12 @@
 
 <script setup>
 import { ref,onMounted } from 'vue'
+import ConfirmDialog from './ConfirmDialog.vue'
+
 import { getListUsers } from '../services/getListUsers'
 import EditUserDialog from './EditUserDialog.vue'
 import { token } from '../services/setToken'
+import { deleteUser } from '../services/deleteUser'
 
 
 
@@ -67,5 +80,24 @@ function handleUserUpdated(updatedUser) {
 
   
   showEdit.value = false
+}
+
+
+const userToDelete = ref(null)
+const showConfirm = ref(false)
+function askDelete(user) {
+  // console.log(event)
+  userToDelete.value = user
+  showConfirm.value = true
+}
+
+async function handleConfirmDelete() {
+  const result = await deleteUser(userToDelete.value._id, token.value)
+  if (result.success) {
+    users.value = users.value.filter(e => e._id !== userToDelete.value._id)
+  } else {
+    console.error("Erreur suppression :", result.message)
+  }
+  showConfirm.value = false
 }
 </script>

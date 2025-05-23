@@ -11,52 +11,64 @@
         <div
           v-for="event in events"
           :key="event._id"
-          class="bg-white rounded-lg shadow-md p-5 flex flex-col justify-between"
+          class="relative bg-white rounded-lg shadow-md p-5 flex flex-col justify-between"
         >
+        <button
+    v-if="user?.admin"
+    @click="editEvent(event)"
+    class="absolute top-2 right-2 text-gray-500 hover:text-yellow-600"
+    title="Modifier"
+  >
+  ✏️
+  </button>
           <div>
             <h3 class="text-xl font-bold mb-2 text-gray-800">{{ event.title }}</h3>
+
             <p class="text-gray-700 mb-3">{{ event.description }}</p>
             <p class="text-gray-600 text-sm mb-1"><strong>Date :</strong> {{ formatDate(event.date) }}</p>
             <p class="text-gray-600 text-sm mb-1"><strong>Lieu :</strong> {{ event.location }}</p>
             <p class="text-gray-600 text-sm"><strong>Participant :</strong> {{  event.participantsCount  }} / {{ event.capacity }}</p>
             <!-- <p class="text-gray-600 text-sm"><strong>Capacité :</strong> {{ event.capacity   }}</p> -->
-          </div class="flex space-x-0 rounded overflow-hidden shadow w-max">
+          </div >
+          <div class="flex items-center space-x-2 mt-4">
           <button
             :disabled="event.participantsCount == event.capacity"
             v-if="!event.isRegistered"
             @click="inscription(event,token)"
-            class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2"
+            class="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold px-4 py-2 rounded"
           >
             S'inscrire
           </button>
           <button
             v-if="event.isRegistered"
             @click="deinscription(event,token)"
-            class="mt-4 w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded transition"
+            class="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold px-4 py-2 rounded"
           >
             Se désinscrire
           </button>
           <button
             v-if="user?.admin"
             @click="askDelete(event)"
-            class="bg-red-500 hover:bg-red-600 text-white px-3 py-2"
+            class="w-auto bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded"
+            title="Supprimer"
           >
-          🗑️
+            🗑️
           </button>
-          <button
-          v-if="user?.admin"
-          @click="editEvent(event)"
-          class="mt-2 w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 rounded transition"
-        >
-          Modifier
-        </button>
-        <EditEventDialog
-  :visible="showEdit"
-  :event="eventToEdit"
-  :token="token"
-  @cancel="showEdit = false"
-  @updated="handleEventUpdated"
-/>
+        </div>
+                  <!-- <button
+                  v-if="user?.admin"
+                  @click="editEvent(event)"
+                  class="mt-2 w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 rounded transition"
+                >
+                  Modifier
+                </button> -->
+                <EditEventDialog
+          :visible="showEdit"
+          :event="eventToEdit"
+          :token="token"
+          @cancel="showEdit = false"
+          @updated="handleEventUpdated"
+        />
 
         </div>
       </div>

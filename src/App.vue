@@ -32,6 +32,11 @@
             to="/listusers"
             class="text-gray-700 hover:text-blue-600 font-semibold"
           >Liste des utilisateurs</router-link>
+          <router-link
+            v-if="currentUser?.admin"
+            to="/createuser"
+            class="text-gray-700 hover:text-blue-600 font-semibold"
+          >Créer un utilisateur</router-link>
         </template>
       </div>
 
